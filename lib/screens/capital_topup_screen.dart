@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sacco_app/services/member_provider.dart';
-import 'package:sacco_app/services/api_service.dart';
 import 'package:sacco_app/widgets/custom_input_field.dart';
 
 class CapitalTopupScreen extends StatefulWidget {
   const CapitalTopupScreen({super.key});
-
   @override
   CapitalTopupScreenState createState() => CapitalTopupScreenState();
 }
@@ -14,7 +12,6 @@ class CapitalTopupScreen extends StatefulWidget {
 class CapitalTopupScreenState extends State<CapitalTopupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
-  final ApiService _apiService = ApiService();
   bool _isLoading = false;
 
   @override
@@ -31,7 +28,7 @@ class CapitalTopupScreenState extends State<CapitalTopupScreen> {
         child: Consumer<MemberProvider>(
           builder: (context, memberProvider, child) {
             final memberData = memberProvider.memberData;
-            
+            final memberNumber = memberData?.memberNumber ?? '';
             return SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -41,7 +38,6 @@ class CapitalTopupScreenState extends State<CapitalTopupScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 20),
-                      
                       // Current Capital Share Info
                       Container(
                         width: double.infinity,
@@ -62,37 +58,46 @@ class CapitalTopupScreenState extends State<CapitalTopupScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            _buildDetailRow('Current Shares:', '${memberData?.capitalShares.toInt() ?? 0}'),
+                            _buildDetailRow(
+                              'Current Shares:',
+                              '${memberData?.capitalShares.toInt() ?? 0}',
+                            ),
                             const SizedBox(height: 8),
-                            _buildDetailRow('Share Percentage:', '${memberData?.sharePercent.toStringAsFixed(2) ?? '0.00'}%'),
+                            _buildDetailRow(
+                              'Share Percentage:',
+                              '${memberData?.sharePercent.toStringAsFixed(2) ?? '0.00'}%',
+                            ),
                             const SizedBox(height: 8),
-                            _buildDetailRow('Share Value:', 'KSH 100 per share'),
+                            _buildDetailRow(
+                              'Share Value:',
+                              'KSH 100 per share',
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: memberData?.memberName ?? 'Loading...'),
+                        controller: TextEditingController(
+                          text: memberData?.memberName ?? 'Loading...',
+                        ),
                         label: 'Member Name',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: memberData?.memberNumber ?? 'Loading...'),
+                        controller: TextEditingController(text: memberNumber),
                         label: 'Member Number',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: 'Capital Share Top-up'),
+                        controller: TextEditingController(
+                          text: 'Capital Share Top-up',
+                        ),
                         label: 'Transaction Type',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
                         controller: _amountController,
                         label: 'Top-up Amount',
@@ -113,7 +118,6 @@ class CapitalTopupScreenState extends State<CapitalTopupScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
                       // Calculation Preview
                       if (_amountController.text.isNotEmpty)
                         Container(
@@ -135,24 +139,37 @@ class CapitalTopupScreenState extends State<CapitalTopupScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              _buildDetailRow('Additional Shares:', '${(double.tryParse(_amountController.text) ?? 0) ~/ 100}'),
+                              _buildDetailRow(
+                                'Additional Shares:',
+                                '${(double.tryParse(_amountController.text) ?? 0) ~/ 100}',
+                              ),
                               const SizedBox(height: 4),
-                              _buildDetailRow('New Total Shares:', '${((memberData?.capitalShares ?? 0) + ((double.tryParse(_amountController.text) ?? 0) ~/ 100)).toInt()}'),
+                              _buildDetailRow(
+                                'New Total Shares:',
+                                '${((memberData?.capitalShares ?? 0) + ((double.tryParse(_amountController.text) ?? 0) ~/ 100)).toInt()}',
+                              ),
                             ],
                           ),
                         ),
                       const SizedBox(height: 32),
-                      
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _confirmTopup,
+                          onPressed: _isLoading
+                              ? null
+                              : () => _confirmTopup(
+                                  context,
+                                  memberProvider,
+                                  memberNumber,
+                                ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             minimumSize: const Size(0, 50),
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
                               : const Text(
                                   'Confirm Top-up',
                                   style: TextStyle(
@@ -182,56 +199,59 @@ class CapitalTopupScreenState extends State<CapitalTopupScreen> {
           width: 120,
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
         ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 14),
-          ),
-        ),
+        Expanded(child: Text(value, style: const TextStyle(fontSize: 14))),
       ],
     );
   }
 
-  Future<void> _confirmTopup() async {
+  Future<void> _confirmTopup(
+    BuildContext context,
+    MemberProvider memberProvider,
+    String memberNumber,
+  ) async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
-
       try {
         final amount = double.parse(_amountController.text);
-        final result = await _apiService.topUpCapitalShare('MEM001', amount);
-
+        final result = await memberProvider.topUpCapitalShare(
+          memberNumber: memberNumber,
+          amount: amount,
+        );
         if (result['success'] && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Capital share top-up successful!'),
+            SnackBar(
+              content: Text(
+                result['message'] ?? 'Capital share top-up successful!',
+              ),
               backgroundColor: Colors.green,
             ),
           );
-          
           // Refresh member data
-          final memberProvider = Provider.of<MemberProvider>(context, listen: false);
-          memberProvider.loadMemberData('MEM001');
-          
+          await memberProvider.loadMemberData(memberNumber);
           Navigator.pop(context);
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result['message'] ?? 'Top-up failed'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Capital share top-up successful!'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: Text('An error occurred: $e'),
+              backgroundColor: Colors.red,
             ),
           );
-          
-          Navigator.pop(context);
         }
       } finally {
         setState(() {

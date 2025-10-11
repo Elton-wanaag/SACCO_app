@@ -15,29 +15,31 @@ class RegistrationScreen extends StatefulWidget {
 class RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _idNumberController = TextEditingController();
   final _dobController = TextEditingController();
-  
+
   String? _selectedApplicantType;
   String? _selectedGender;
   bool _termsAccepted = false;
 
   final List<String> _applicantTypes = [
     'Corporate/Business',
-    'Individual',
+    'individual',
     'Child',
   ];
 
-  final List<String> _genders = [
-    'Male',
-    'Female',
-    'Other',
-  ];
+  final List<String> _genders = ['male', 'Female', 'Other'];
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
+      initialDate: DateTime.now().subtract(
+        const Duration(days: 6570),
+      ), // 18 years ago
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
@@ -63,53 +65,45 @@ class RegistrationScreenState extends State<RegistrationScreen> {
     if (_formKey.currentState!.validate() && _termsAccepted) {
       try {
         final result = await authProvider.register(
-          _fullNameController.text.trim(),
-          _selectedApplicantType!,
-          _idNumberController.text.trim(),
-          _selectedGender!,
-          _dobController.text,
+          fullName: _fullNameController.text.trim(),
+          email: _emailController.text.trim(),
+          phone: _phoneController.text.trim(),
+          password: _passwordController.text,
+          applicantType: _selectedApplicantType!,
+          identificationNo: _idNumberController.text.trim(),
+          gender: _selectedGender!,
         );
 
         if (mounted) {
           if (result['success'] == true) {
             _showSnackBar(result['message'] ?? 'Registration successful!');
-            
+
             // Navigate to login after successful registration
             SchedulerBinding.instance.addPostFrameCallback((_) {
-              Navigator.of(context, rootNavigator: true).pushReplacementNamed('/login');
+              Navigator.of(
+                context,
+                rootNavigator: true,
+              ).pushReplacementNamed('/login');
             });
           } else {
             // Handle registration errors
             String errorMessage = result['message'] ?? 'Registration failed';
-            
-            // Handle field-specific errors
-            if (result['errors'] != null && result['errors'] is Map) {
-              final errors = result['errors'] as Map<String, dynamic>;
-              List<String> errorMessages = [];
-              
-              errors.forEach((field, messages) {
-                if (messages is List) {
-                  errorMessages.addAll(messages.map((msg) => msg.toString()));
-                } else {
-                  errorMessages.add(messages.toString());
-                }
-              });
-              
-              if (errorMessages.isNotEmpty) {
-                errorMessage = errorMessages.join('\n');
-              }
-            }
-            
             _showSnackBar(errorMessage, isError: true);
           }
         }
       } catch (e) {
         if (mounted) {
-          _showSnackBar('An unexpected error occurred. Please try again.', isError: true);
+          _showSnackBar(
+            'An unexpected error occurred. Please try again.',
+            isError: true,
+          );
         }
       }
     } else if (!_termsAccepted) {
-      _showSnackBar('Please accept the Terms & Conditions to continue.', isError: true);
+      _showSnackBar(
+        'Please accept the Terms & Conditions to continue.',
+        isError: true,
+      );
     }
   }
 
@@ -122,15 +116,14 @@ class RegistrationScreenState extends State<RegistrationScreen> {
       appBar: AppBar(
         title: const Text(
           'SIGN UP/REGISTER',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         leading: isWeb
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed('/'),
+                onPressed: () =>
+                    Navigator.of(context, rootNavigator: true).pushNamed('/'),
               )
             : null,
       ),
@@ -139,7 +132,8 @@ class RegistrationScreenState extends State<RegistrationScreen> {
           child: SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
+                minHeight:
+                    MediaQuery.of(context).size.height -
                     MediaQuery.of(context).padding.top -
                     MediaQuery.of(context).padding.bottom,
               ),
@@ -165,7 +159,71 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
+                      InputField(
+                        controller: _emailController,
+                        label: 'Email',
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter email';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      InputField(
+                        controller: _phoneController,
+                        label: 'Phone Number',
+                        keyboardType: TextInputType.phone,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter phone number';
+                          }
+                          if (value.trim().length < 10) {
+                            return 'Phone number must be at least 10 digits';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      InputField(
+                        controller: _passwordController,
+                        label: 'Password',
+                        obscureText: true,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter password';
+                          }
+                          if (value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      InputField(
+                        controller: _confirmPasswordController,
+                        label: 'Confirm Password',
+                        obscureText: true,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please confirm password';
+                          }
+                          if (value != _passwordController.text) {
+                            return 'Passwords do not match';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
                       // Applicant Type Dropdown
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -182,25 +240,40 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                             ),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<String>(
-                              value: _selectedApplicantType,
+                              initialValue: _selectedApplicantType,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: Colors.grey,
+                                    width: 1.5,
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: Colors.grey,
+                                    width: 1.5,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Colors.green, width: 2),
+                                  borderSide: const BorderSide(
+                                    color: Colors.green,
+                                    width: 2,
+                                  ),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                    width: 1.5,
+                                  ),
                                 ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
                               ),
                               hint: const Text('Select applicant type'),
                               items: _applicantTypes.map((String type) {
@@ -225,7 +298,7 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       InputField(
                         controller: _idNumberController,
                         label: 'Identification Number',
@@ -241,7 +314,7 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Gender Dropdown
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -258,25 +331,40 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                             ),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<String>(
-                              value: _selectedGender,
+                              initialValue: _selectedGender,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: Colors.grey,
+                                    width: 1.5,
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Colors.grey, width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: Colors.grey,
+                                    width: 1.5,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Colors.green, width: 2),
+                                  borderSide: const BorderSide(
+                                    color: Colors.green,
+                                    width: 2,
+                                  ),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: Colors.red,
+                                    width: 1.5,
+                                  ),
                                 ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
                               ),
                               hint: const Text('Select gender'),
                               items: _genders.map((String gender) {
@@ -301,7 +389,7 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       InputField(
                         controller: _dobController,
                         label: 'Date of Birth',
@@ -315,7 +403,7 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      
+
                       Row(
                         children: [
                           Checkbox(
@@ -328,7 +416,10 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                           ),
                           const Text('I agree to the '),
                           GestureDetector(
-                            onTap: () => Navigator.of(context, rootNavigator: true).pushNamed('/terms'),
+                            onTap: () => Navigator.of(
+                              context,
+                              rootNavigator: true,
+                            ).pushNamed('/terms'),
                             child: const Text(
                               'Terms & Conditions',
                               style: TextStyle(
@@ -340,7 +431,7 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      
+
                       ElevatedButton(
                         onPressed: authProvider.isLoading
                             ? null
@@ -350,7 +441,9 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                           minimumSize: const Size(200, 50),
                         ),
                         child: authProvider.isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
                             : const Text(
                                 'Sign Up/Register',
                                 style: TextStyle(color: Colors.white),
@@ -373,6 +466,7 @@ class InputField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final TextInputType? keyboardType;
+  final bool obscureText;
   final bool readOnly;
   final VoidCallback? onTap;
   final String? Function(String?)? validator;
@@ -382,6 +476,7 @@ class InputField extends StatelessWidget {
     required this.controller,
     required this.label,
     this.keyboardType,
+    this.obscureText = false,
     this.readOnly = false,
     this.onTap,
     this.validator,
@@ -406,6 +501,7 @@ class InputField extends StatelessWidget {
           TextFormField(
             controller: controller,
             keyboardType: keyboardType,
+            obscureText: obscureText,
             readOnly: readOnly,
             onTap: onTap,
             validator: validator,
@@ -426,7 +522,10 @@ class InputField extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Colors.red, width: 1.5),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
         ],

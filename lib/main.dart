@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sacco_app/authentication/login_screen.dart';
 import 'package:sacco_app/authentication/registration_screen.dart';
-//import 'package:sacco_app/authentication/welcome_screen.dart';
+import 'package:sacco_app/authentication/welcome_screen.dart';
 import 'package:sacco_app/screens/home_screen.dart';
 import 'package:sacco_app/screens/terms_and_conditions_screen.dart';
 import 'package:sacco_app/screens/savings_payment_screen.dart';
@@ -41,18 +41,21 @@ class SaccoApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
           useMaterial3: true,
         ),
-        home: const HomeScreen(),
+        initialRoute: '/',
         routes: {
+          '/': (context) => const WelcomeScreen(), // Welcome screen is root
           '/register': (context) => const RegistrationScreen(),
           '/login': (context) => const LoginScreen(),
           '/home': (context) => const HomeScreen(),
           '/terms': (context) => const TermsAndConditionsScreen(),
           '/savings-payment': (context) => const SavingsPaymentScreen(),
-          '/payment-confirmation': (context) => const PaymentConfirmationScreen(),
+          '/payment-confirmation': (context) =>
+              const PaymentConfirmationScreen(),
           '/payment-success': (context) => const PaymentSuccessScreen(),
           '/loan-request': (context) => const LoanRequestScreen(),
           '/guarantor-selection': (context) => const GuarantorSelectionScreen(),
-          '/loan-request-success': (context) => const LoanRequestSuccessScreen(),
+          '/loan-request-success': (context) =>
+              const LoanRequestSuccessScreen(),
           '/loan-payment': (context) => const LoanPaymentScreen(),
           '/transactions': (context) => const TransactionsScreen(),
           '/contact': (context) => const ContactScreen(),

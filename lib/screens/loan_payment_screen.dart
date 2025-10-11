@@ -5,7 +5,6 @@ import 'package:sacco_app/widgets/custom_input_field.dart';
 
 class LoanPaymentScreen extends StatefulWidget {
   const LoanPaymentScreen({super.key});
-
   @override
   LoanPaymentScreenState createState() => LoanPaymentScreenState();
 }
@@ -19,8 +18,13 @@ class LoanPaymentScreenState extends State<LoanPaymentScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final memberProvider = Provider.of<MemberProvider>(context, listen: false);
-      memberProvider.loadCurrentLoan('MEM001');
+      final memberProvider = Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      );
+      memberProvider.loadCurrentLoan(
+        'MEM001',
+      ); // Should come from auth provider
     });
   }
 
@@ -39,7 +43,8 @@ class LoanPaymentScreenState extends State<LoanPaymentScreen> {
           builder: (context, memberProvider, child) {
             final memberData = memberProvider.memberData;
             final currentLoan = memberProvider.currentLoan;
-            
+            final memberNumber = memberData?.memberNumber ?? 'MEM001';
+
             if (currentLoan == null) {
               return const Center(
                 child: Text(
@@ -48,12 +53,11 @@ class LoanPaymentScreenState extends State<LoanPaymentScreen> {
                 ),
               );
             }
-            
             // Set default installment amount
             if (_amountController.text.isEmpty) {
-              _amountController.text = currentLoan.installmentAmount.toStringAsFixed(2);
+              _amountController.text = currentLoan.installmentAmount
+                  .toStringAsFixed(2);
             }
-            
             return SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -63,35 +67,35 @@ class LoanPaymentScreenState extends State<LoanPaymentScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 20),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: memberData?.memberName ?? 'Loading...'),
+                        controller: TextEditingController(
+                          text: memberData?.memberName ?? 'Loading...',
+                        ),
                         label: 'Member Name',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: memberData?.memberNumber ?? 'Loading...'),
+                        controller: TextEditingController(text: memberNumber),
                         label: 'Member Number',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
                         controller: TextEditingController(text: 'Loan Payment'),
                         label: 'Transaction Type',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: 'KSH ${currentLoan.installmentAmount.toStringAsFixed(2)}'),
+                        controller: TextEditingController(
+                          text:
+                              'KSH ${currentLoan.installmentAmount.toStringAsFixed(2)}',
+                        ),
                         label: 'Installment Amount Due',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
                         controller: _amountController,
                         label: 'New Repayment Amount',
@@ -109,7 +113,6 @@ class LoanPaymentScreenState extends State<LoanPaymentScreen> {
                         },
                       ),
                       const SizedBox(height: 24),
-                      
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
@@ -129,28 +132,49 @@ class LoanPaymentScreenState extends State<LoanPaymentScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            _buildDetailRow('Outstanding Balance:', 'KSH ${currentLoan.outstandingBalance.toStringAsFixed(2)}'),
+                            _buildDetailRow(
+                              'Outstanding Balance:',
+                              'KSH ${currentLoan.outstandingBalance.toStringAsFixed(2)}',
+                            ),
                             const SizedBox(height: 8),
-                            _buildDetailRow('Monthly Installment:', 'KSH ${currentLoan.installmentAmount.toStringAsFixed(2)}'),
+                            _buildDetailRow(
+                              'Monthly Installment:',
+                              'KSH ${currentLoan.installmentAmount.toStringAsFixed(2)}',
+                            ),
                             const SizedBox(height: 8),
-                            _buildDetailRow('Next Payment Date:', currentLoan.nextPaymentDate.toString().split(' ')[0]),
+                            _buildDetailRow(
+                              'Next Payment Date:',
+                              currentLoan.nextPaymentDate.toString().split(
+                                ' ',
+                              )[0],
+                            ),
                             const SizedBox(height: 8),
-                            _buildDetailRow('Months Remaining:', '${currentLoan.monthsLeft}'),
+                            _buildDetailRow(
+                              'Months Remaining:',
+                              '${currentLoan.monthsLeft}',
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 32),
-                      
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _confirmPayment,
+                          onPressed: _isLoading
+                              ? null
+                              : () => _confirmPayment(
+                                  context,
+                                  memberProvider,
+                                  memberNumber,
+                                ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             minimumSize: const Size(0, 50),
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
                               : const Text(
                                   'Confirm',
                                   style: TextStyle(
@@ -180,35 +204,29 @@ class LoanPaymentScreenState extends State<LoanPaymentScreen> {
           width: 140,
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
         ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 14),
-          ),
-        ),
+        Expanded(child: Text(value, style: const TextStyle(fontSize: 14))),
       ],
     );
   }
 
-  void _confirmPayment() {
+  void _confirmPayment(
+    BuildContext context,
+    MemberProvider memberProvider,
+    String memberNumber,
+  ) {
     if (_formKey.currentState!.validate()) {
       final amount = double.parse(_amountController.text);
-      final memberProvider = Provider.of<MemberProvider>(context, listen: false);
       final memberData = memberProvider.memberData;
-      
       Navigator.pushNamed(
         context,
         '/payment-confirmation',
         arguments: {
           'type': 'loan',
           'memberName': memberData?.memberName ?? '',
-          'memberNumber': memberData?.memberNumber ?? '',
+          'memberNumber': memberNumber,
           'amount': amount,
         },
       );

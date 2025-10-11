@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:sacco_app/services/api_service.dart';
+import 'package:provider/provider.dart';
+import 'package:sacco_app/services/member_provider.dart';
 
 class PaymentConfirmationScreen extends StatefulWidget {
   const PaymentConfirmationScreen({super.key});
-
   @override
-  PaymentConfirmationScreenState createState() => PaymentConfirmationScreenState();
+  PaymentConfirmationScreenState createState() =>
+      PaymentConfirmationScreenState();
 }
 
 class PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
-  final ApiService _apiService = ApiService();
   bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final type = args['type'] as String;
     final memberName = args['memberName'] as String;
     final memberNumber = args['memberNumber'] as String;
@@ -35,20 +36,17 @@ class PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
-              
               const Text(
                 'Confirm the following and click Pay',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              
               Card(
                 elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
@@ -56,29 +54,39 @@ class PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                     children: [
                       _buildDetailRow('Name:', memberName),
                       const SizedBox(height: 12),
-                      _buildDetailRow('Acc:', type == 'loan' ? '$memberNumber - loan payment' : memberNumber),
+                      _buildDetailRow(
+                        'Acc:',
+                        type == 'loan'
+                            ? '$memberNumber - loan payment'
+                            : memberNumber,
+                      ),
                       const SizedBox(height: 12),
-                      _buildDetailRow('Amount:', 'KSH ${amount.toStringAsFixed(2)}'),
+                      _buildDetailRow(
+                        'Amount:',
+                        'KSH ${amount.toStringAsFixed(2)}',
+                      ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-              
               const Text(
                 'When prompted, enter MPESA PIN',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : () => _processPayment(type, memberNumber, amount),
+                  onPressed: _isLoading
+                      ? null
+                      : () => _processPayment(
+                          context,
+                          type,
+                          memberNumber,
+                          amount,
+                        ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     minimumSize: const Size(0, 50),
@@ -96,13 +104,9 @@ class PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              
               const Text(
                 'Follow the Steps Below. Once you receive a successful reply from Mpesa. Click the PAY button below.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -120,63 +124,77 @@ class PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
           width: 80,
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 16),
-          ),
-        ),
+        Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
       ],
     );
   }
 
-  Future<void> _processPayment(String type, String memberNumber, double amount) async {
+  Future<void> _processPayment(
+    BuildContext context,
+    String type,
+    String memberNumber,
+    double amount,
+  ) async {
     setState(() {
       _isLoading = true;
     });
-
     try {
+      final memberProvider = Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      );
       Map<String, dynamic> result;
+
       if (type == 'savings') {
-        result = await _apiService.initiateSavingsPayment(memberNumber, amount);
+        result = await memberProvider.initiateSavingsPayment(
+          memberNumber: memberNumber,
+          amount: amount,
+        );
       } else {
-        result = await _apiService.initiateLoanPayment(memberNumber, amount);
+        result = await memberProvider.initiateLoanPayment(
+          memberNumber: memberNumber,
+          amount: amount,
+        );
       }
 
-      if (result['success']) {
+      if (result['success'] && result['data'] != null) {
         if (mounted) {
           Navigator.pushReplacementNamed(
             context,
             '/payment-success',
             arguments: {
               'type': type,
-              'memberName': (ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>)['memberName'] ?? '',
+              'memberName':
+                  (ModalRoute.of(context)!.settings.arguments
+                      as Map<String, dynamic>)['memberName'] ??
+                  '',
               'memberNumber': memberNumber,
               'amount': amount,
-              'paybill': result['paybill'] ?? '8751990',
+              'paybill': result['data']['paybill'] ?? '8751990',
             },
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Payment initiation failed'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
     } catch (e) {
-      // Handle error - for now just proceed to success page
+      // Handle error
       if (mounted) {
-        Navigator.pushReplacementNamed(
-          context,
-          '/payment-success',
-          arguments: {
-            'type': type,
-            'memberName': (ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>)['memberName'] ?? '',
-            'memberNumber': memberNumber,
-            'amount': amount,
-            'paybill': '8751990',
-          },
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

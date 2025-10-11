@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:sacco_app/services/api_service.dart';
+import 'package:provider/provider.dart';
+import 'package:sacco_app/services/member_provider.dart';
 import 'package:sacco_app/models/member_data.dart';
 
 class GuarantorSelectionScreen extends StatefulWidget {
   const GuarantorSelectionScreen({super.key});
-
   @override
-  GuarantorSelectionScreenState createState() => GuarantorSelectionScreenState();
+  GuarantorSelectionScreenState createState() =>
+      GuarantorSelectionScreenState();
 }
 
 class GuarantorSelectionScreenState extends State<GuarantorSelectionScreen> {
-  final ApiService _apiService = ApiService();
   List<GuarantorData> _availableGuarantors = [];
   final List<GuarantorData> _selectedGuarantors = [];
   final Map<String, TextEditingController> _amountControllers = {};
@@ -25,23 +25,57 @@ class GuarantorSelectionScreenState extends State<GuarantorSelectionScreen> {
 
   Future<void> _loadAvailableGuarantors() async {
     try {
-      final guarantors = await _apiService.getAvailableGuarantors('MEM001');
-      setState(() {
-        _availableGuarantors = guarantors;
-        _isLoading = false;
-      });
+      final memberProvider = Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      );
+      final args =
+          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+      final memberNumber = args['memberNumber'] as String;
+
+      final result = await memberProvider.getAvailableGuarantors(memberNumber);
+      if (result['success'] && result['data'] != null) {
+        setState(() {
+          _availableGuarantors = (result['data'] as List<dynamic>)
+              .map((json) => GuarantorData.fromJson(json))
+              .toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Failed to load guarantors'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final memberName = args['memberName'] as String;
     final requestedAmount = args['requestedAmount'] as double;
+    final memberNumber = args['memberNumber'] as String;
 
     return Scaffold(
       appBar: AppBar(
@@ -61,7 +95,6 @@ class GuarantorSelectionScreenState extends State<GuarantorSelectionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 20),
-                      
                       const Text(
                         'Each loan must be guaranteed by a member, whether individually or by other members. Select the guarantor/s below',
                         style: TextStyle(
@@ -71,10 +104,11 @@ class GuarantorSelectionScreenState extends State<GuarantorSelectionScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
-                      
                       Card(
                         elevation: 2,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
@@ -101,7 +135,6 @@ class GuarantorSelectionScreenState extends State<GuarantorSelectionScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      
                       const Text(
                         'Available Guarantors:',
                         style: TextStyle(
@@ -110,20 +143,20 @@ class GuarantorSelectionScreenState extends State<GuarantorSelectionScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
                       ..._availableGuarantors.asMap().entries.map((entry) {
                         final index = entry.key;
                         final guarantor = entry.value;
                         final controllerId = 'guarantor_$index';
-                        
                         if (!_amountControllers.containsKey(controllerId)) {
-                          _amountControllers[controllerId] = TextEditingController();
+                          _amountControllers[controllerId] =
+                              TextEditingController();
                         }
-                        
                         return Card(
                           elevation: 2,
                           margin: const EdgeInsets.only(bottom: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
@@ -170,9 +203,7 @@ class GuarantorSelectionScreenState extends State<GuarantorSelectionScreen> {
                           ),
                         );
                       }),
-                      
                       const SizedBox(height: 24),
-                      
                       if (_getTotalGuaranteedAmount() > 0)
                         Container(
                           width: double.infinity,
@@ -216,19 +247,27 @@ class GuarantorSelectionScreenState extends State<GuarantorSelectionScreen> {
                           ),
                         ),
                       const SizedBox(height: 32),
-                      
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _isSubmitting || _getTotalGuaranteedAmount() < requestedAmount
+                          onPressed:
+                              _isSubmitting ||
+                                  _getTotalGuaranteedAmount() < requestedAmount
                               ? null
-                              : () => _submitLoanRequest(args),
+                              : () => _submitLoanRequest(
+                                  context,
+                                  memberName,
+                                  memberNumber,
+                                  requestedAmount,
+                                ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             minimumSize: const Size(0, 50),
                           ),
                           child: _isSubmitting
-                              ? const CircularProgressIndicator(color: Colors.white)
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
                               : const Text(
                                   'Request',
                                   style: TextStyle(
@@ -249,44 +288,59 @@ class GuarantorSelectionScreenState extends State<GuarantorSelectionScreen> {
 
   void _updateSelectedGuarantors() {
     _selectedGuarantors.clear();
-    
     _amountControllers.forEach((key, controller) {
       final amount = double.tryParse(controller.text);
       if (amount != null && amount > 0) {
         final index = int.parse(key.split('_')[1]);
         final guarantor = _availableGuarantors[index];
-        _selectedGuarantors.add(GuarantorData(
-          memberName: guarantor.memberName,
-          memberNumber: guarantor.memberNumber,
-          guaranteedAmount: amount,
-          availableAmount: guarantor.availableAmount,
-        ));
+        _selectedGuarantors.add(
+          GuarantorData(
+            memberName: guarantor.memberName,
+            memberNumber: guarantor.memberNumber,
+            guaranteedAmount: amount,
+            availableAmount: guarantor.availableAmount,
+          ),
+        );
       }
     });
-    
     setState(() {});
   }
 
   double _getTotalGuaranteedAmount() {
-    return _selectedGuarantors.fold(0.0, (sum, guarantor) => sum + guarantor.guaranteedAmount);
+    return _selectedGuarantors.fold(
+      0.0,
+      (sum, guarantor) => sum + guarantor.guaranteedAmount,
+    );
   }
 
-  Future<void> _submitLoanRequest(Map<String, dynamic> args) async {
+  Future<void> _submitLoanRequest(
+    BuildContext context,
+    String memberName,
+    String memberNumber,
+    double requestedAmount,
+  ) async {
     setState(() {
       _isSubmitting = true;
     });
-
     try {
-      final guarantorsList = _selectedGuarantors.map((g) => {
-        'memberName': g.memberName,
-        'memberNumber': g.memberNumber,
-        'guaranteedAmount': g.guaranteedAmount,
-      }).toList();
+      final guarantorsList = _selectedGuarantors
+          .map(
+            (g) => {
+              'memberName': g.memberName,
+              'memberNumber': g.memberNumber,
+              'guaranteedAmount': g.guaranteedAmount,
+            },
+          )
+          .toList();
 
-      final result = await _apiService.submitLoanRequest(
-        args['memberNumber'],
-        args['requestedAmount'],
-        guarantorsList,
+      final memberProvider = Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      );
+      final result = await memberProvider.submitLoanRequest(
+        memberNumber: memberNumber,
+        requestedAmount: requestedAmount,
+        guarantors: guarantorsList,
       );
 
       if (result['success'] && mounted) {
@@ -294,25 +348,34 @@ class GuarantorSelectionScreenState extends State<GuarantorSelectionScreen> {
           context,
           '/loan-request-success',
           arguments: {
-            'memberName': args['memberName'],
-            'memberNumber': args['memberNumber'],
-            'requestedAmount': args['requestedAmount'],
-            'loanRequestNumber': result['loanRequestNumber'],
+            'memberName': memberName,
+            'memberNumber': memberNumber,
+            'requestedAmount': requestedAmount,
+            'loanRequestNumber':
+                result['data']?['loanRequestNumber'] ??
+                'LRQ${DateTime.now().millisecondsSinceEpoch}',
           },
         );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                result['message'] ?? 'Failed to submit loan request',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
-      // Handle error - for now just proceed to success page
+      // Handle error
       if (mounted) {
-        Navigator.pushReplacementNamed(
-          context,
-          '/loan-request-success',
-          arguments: {
-            'memberName': args['memberName'],
-            'memberNumber': args['memberNumber'],
-            'requestedAmount': args['requestedAmount'],
-            'loanRequestNumber': 'LRQ${DateTime.now().millisecondsSinceEpoch}',
-          },
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

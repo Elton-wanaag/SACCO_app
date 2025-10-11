@@ -5,7 +5,6 @@ import 'package:sacco_app/models/member_data.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
-
   @override
   TransactionsScreenState createState() => TransactionsScreenState();
 }
@@ -15,8 +14,13 @@ class TransactionsScreenState extends State<TransactionsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final memberProvider = Provider.of<MemberProvider>(context, listen: false);
-      memberProvider.loadTransactionHistory('MEM001');
+      final memberProvider = Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      );
+      memberProvider.loadTransactionHistory(
+        'MEM001',
+      ); // Should come from auth provider
     });
   }
 
@@ -36,32 +40,22 @@ class TransactionsScreenState extends State<TransactionsScreen> {
             if (memberProvider.isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
-
             final transactions = memberProvider.transactions;
-            
             if (transactions.isEmpty) {
               return const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.receipt_long,
-                      size: 64,
-                      color: Colors.grey,
-                    ),
+                    Icon(Icons.receipt_long, size: 64, color: Colors.grey),
                     SizedBox(height: 16),
                     Text(
                       'No transactions found',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
                     ),
                   ],
                 ),
               );
             }
-
             return ListView.builder(
               padding: const EdgeInsets.all(16.0),
               itemCount: transactions.length,
@@ -75,10 +69,7 @@ class TransactionsScreenState extends State<TransactionsScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'My Transactions',
@@ -110,7 +101,6 @@ class TransactionsScreenState extends State<TransactionsScreen> {
   Widget _buildTransactionCard(TransactionData transaction) {
     Color statusColor;
     IconData statusIcon;
-    
     switch (transaction.status.toLowerCase()) {
       case 'completed':
         statusColor = Colors.green;
@@ -128,7 +118,6 @@ class TransactionsScreenState extends State<TransactionsScreen> {
         statusColor = Colors.grey;
         statusIcon = Icons.info;
     }
-
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
@@ -152,11 +141,7 @@ class TransactionsScreenState extends State<TransactionsScreen> {
                 ),
                 Row(
                   children: [
-                    Icon(
-                      statusIcon,
-                      size: 16,
-                      color: statusColor,
-                    ),
+                    Icon(statusIcon, size: 16, color: statusColor),
                     const SizedBox(width: 4),
                     Text(
                       transaction.status,
@@ -173,10 +158,7 @@ class TransactionsScreenState extends State<TransactionsScreen> {
             const SizedBox(height: 8),
             Text(
               transaction.description,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
             ),
             const SizedBox(height: 12),
             Row(
@@ -187,18 +169,16 @@ class TransactionsScreenState extends State<TransactionsScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: transaction.type.toLowerCase().contains('deposit') || 
-                           transaction.type.toLowerCase().contains('savings')
+                    color:
+                        transaction.type.toLowerCase().contains('deposit') ||
+                            transaction.type.toLowerCase().contains('savings')
                         ? Colors.green
                         : Colors.red,
                   ),
                 ),
                 Text(
                   '${transaction.date.day}/${transaction.date.month}/${transaction.date.year}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),

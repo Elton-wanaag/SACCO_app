@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../services/auth_provider.dart';
 import '../services/member_provider.dart';
 import '../widgets/quick_action_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
   @override
   HomeScreenState createState() => HomeScreenState();
 }
@@ -19,12 +19,27 @@ class HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final memberProvider = Provider.of<MemberProvider>(
         context,
         listen: false,
       );
-      memberProvider.loadMemberData('MEM001');
-      memberProvider.loadCurrentLoan('MEM001');
+
+      // Check if user is authenticated
+      if (!authProvider.isAuthenticated) {
+        // If not authenticated, redirect to login
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/login');
+        }
+        return;
+      }
+
+      // If authenticated, load member data
+      final memberNumber =
+          authProvider.memberId?.toString() ??
+          'MEM001'; // You'll need to adjust this to get the actual member number
+      memberProvider.loadMemberData(memberNumber);
+      memberProvider.loadCurrentLoan(memberNumber);
     });
   }
 
@@ -48,6 +63,18 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
+
+    // Check authentication here too in case the user was logged out elsewhere
+    final authProvider = Provider.of<AuthProvider>(context);
+    if (!authProvider.isAuthenticated) {
+      // Redirect to login if not authenticated
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/login');
+        }
+      });
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return PopScope(
       canPop: false,
@@ -93,7 +120,6 @@ class HomeScreenState extends State<HomeScreen> {
               if (memberData == null) {
                 return const Center(child: Text('Failed to load member data'));
               }
-
               return SingleChildScrollView(
                 child: Padding(
                   padding: EdgeInsets.all(isSmallScreen ? 16.0 : 24.0),
@@ -102,7 +128,7 @@ class HomeScreenState extends State<HomeScreen> {
                     children: [
                       // Welcome Section
                       Text(
-                        'Hello, Member!',
+                        'Hello, ${memberData.memberName}!',
                         style: TextStyle(
                           fontSize: isSmallScreen ? 24 : 28,
                           fontWeight: FontWeight.bold,
@@ -118,7 +144,6 @@ class HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-
                       // Balance Cards - Grid Layout
                       GridView.count(
                         shrinkWrap: true,
@@ -154,7 +179,6 @@ class HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 32),
-
                       // Quick Actions Section
                       Text(
                         'Quick Actions',
@@ -280,37 +304,51 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                ListTile(
-                  leading: const Icon(
-                    Icons.person_outline,
-                    color: Colors.black87,
-                  ),
-                  title: const Text(
-                    'Profile',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  onTap: () => Navigator.pushNamed(context, '/profile'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.settings, color: Colors.black87),
-                  title: const Text(
-                    'Settings',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  onTap: () => Navigator.pushNamed(context, '/settings'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.black87),
-                  title: const Text(
-                    'Logout',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  onTap: () => Navigator.pushNamed(context, '/login'),
-                ),
-              ],
+            child: Consumer<AuthProvider>(
+              builder: (context, authProvider, child) {
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    ListTile(
+                      leading: const Icon(
+                        Icons.person_outline,
+                        color: Colors.black87,
+                      ),
+                      title: const Text(
+                        'Profile',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      onTap: () => Navigator.pushNamed(context, '/profile'),
+                    ),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.settings,
+                        color: Colors.black87,
+                      ),
+                      title: const Text(
+                        'Settings',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      onTap: () => Navigator.pushNamed(context, '/settings'),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.logout, color: Colors.black87),
+                      title: const Text(
+                        'Logout',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      onTap: () {
+                        authProvider.logout();
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/',
+                          (route) => false,
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -323,7 +361,6 @@ class HomeScreenState extends State<HomeScreen> {
     List<String> parts = amountStr.split('.');
     String integerPart = parts[0];
     String decimalPart = parts[1];
-
     String formattedInteger = '';
     for (int i = 0; i < integerPart.length; i++) {
       if (i > 0 && (integerPart.length - i) % 3 == 0) {
@@ -331,7 +368,6 @@ class HomeScreenState extends State<HomeScreen> {
       }
       formattedInteger += integerPart[i];
     }
-
     return 'KSH $formattedInteger.$decimalPart';
   }
 
@@ -346,7 +382,6 @@ class HomeScreenState extends State<HomeScreen> {
     final Color lightGreen = Color(0xFF8BC34A);
     final Color grayText = Color(0xFF6B6B6B);
     final Color lightBackground = Color(0xFFF5F5F5);
-
     return Card(
       elevation: 6,
       shadowColor: grayText.withOpacity(0.2),
@@ -436,7 +471,6 @@ class HomeScreenState extends State<HomeScreen> {
     final Color lightGreen = Color(0xFF8BC34A);
     final Color grayText = Color(0xFF6B6B6B);
     final Color lightBackground = Color(0xFFF5F5F5);
-
     return Card(
       elevation: 6,
       shadowColor: grayText.withOpacity(0.2),
@@ -539,7 +573,6 @@ class HomeScreenState extends State<HomeScreen> {
     // Anfal Sacco brand colors
     final Color primaryRed = Color(0xFFD44A5B);
     final Color grayText = Color(0xFF6B6B6B);
-
     return Column(
       children: [
         Text(

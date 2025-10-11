@@ -6,36 +6,36 @@ class AuthProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _isAuthenticated = false;
-  Map<String, dynamic>? _userData;
+  int? _memberId;
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _isAuthenticated;
-  Map<String, dynamic>? get userData => _userData;
+  int? get memberId => _memberId;
 
   Future<void> checkAuthStatus() async {
     _isAuthenticated = await _apiService.isAuthenticated();
     notifyListeners();
   }
 
-  Future<Map<String, dynamic>> login(String emailOrId, String password) async {
+  Future<Map<String, dynamic>> login(String email, String password) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final result = await _apiService.login(emailOrId, password);
-      
+      final result = await _apiService.login(email, password);
+
       if (result['success'] == true) {
         _isAuthenticated = true;
-        _userData = result['data'];
+        _memberId = result['member_id'];
         _error = null;
       } else {
         _isAuthenticated = false;
-        _userData = null;
+        _memberId = null;
         _error = result['message'];
       }
-      
+
       _isLoading = false;
       notifyListeners();
       return result;
@@ -43,6 +43,7 @@ class AuthProvider with ChangeNotifier {
       _error = 'An unexpected error occurred';
       _isLoading = false;
       _isAuthenticated = false;
+      _memberId = null;
       notifyListeners();
       return {
         'success': false,
@@ -52,18 +53,34 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>> register(String fullName, String applicantType, String idNumber, String gender, String dob) async {
+  Future<Map<String, dynamic>> register({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String password,
+    required String applicantType,
+    required String identificationNo,
+    required String gender,
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final result = await _apiService.register(fullName, applicantType, idNumber, gender, dob);
-      
+      final result = await _apiService.register(
+        fullName: fullName,
+        email: email,
+        phone: phone,
+        password: password,
+        applicantType: applicantType,
+        identificationNo: identificationNo,
+        gender: gender,
+      );
+
       if (result['success'] != true) {
         _error = result['message'];
       }
-      
+
       _isLoading = false;
       notifyListeners();
       return result;
@@ -82,7 +99,7 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     await _apiService.logout();
     _isAuthenticated = false;
-    _userData = null;
+    _memberId = null;
     _error = null;
     notifyListeners();
   }

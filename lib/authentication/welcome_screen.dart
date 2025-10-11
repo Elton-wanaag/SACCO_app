@@ -15,7 +15,8 @@ class WelcomeScreen extends StatelessWidget {
           child: SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
+                minHeight:
+                    MediaQuery.of(context).size.height -
                     MediaQuery.of(context).padding.top -
                     MediaQuery.of(context).padding.bottom,
               ),
@@ -26,10 +27,7 @@ class WelcomeScreen extends StatelessWidget {
                   const Text(
                     'Welcome to the Home of Collective Prosperity, Individual Growth',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 32),
                   Card(
@@ -41,16 +39,20 @@ class WelcomeScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center, // Center all children
+                        crossAxisAlignment:
+                            CrossAxisAlignment.center, // Center all children
                         children: [
                           Row(
                             children: [
                               IconButton(
-                                icon: const CustomArrowIcon(), // Custom arrow with elongated filled triangular head
+                                icon:
+                                    const CustomArrowIcon(), // Custom arrow with elongated filled triangular head
                                 onPressed: () {
                                   SystemNavigator.pop(); // Exit the app
                                 },
-                                padding: const EdgeInsets.only(left: 0), // Align to left edge
+                                padding: const EdgeInsets.only(
+                                  left: 0,
+                                ), // Align to left edge
                                 alignment: Alignment.centerLeft,
                               ),
                               const Expanded(
@@ -69,10 +71,17 @@ class WelcomeScreen extends StatelessWidget {
                           SizedBox(
                             width: buttonWidth,
                             child: ElevatedButton(
-                              onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed('/register'),
+                              onPressed: () => Navigator.of(
+                                context,
+                                rootNavigator: true,
+                              ).pushNamed('/register'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green[700], // Algae-like green
-                                minimumSize: const Size(0, 50), // Height only, width controlled by SizedBox
+                                backgroundColor:
+                                    Colors.green[700], // Algae-like green
+                                minimumSize: const Size(
+                                  0,
+                                  50,
+                                ), // Height only, width controlled by SizedBox
                               ),
                               child: const Text(
                                 'Sign Up/Register',
@@ -87,10 +96,21 @@ class WelcomeScreen extends StatelessWidget {
                           SizedBox(
                             width: buttonWidth,
                             child: ElevatedButton(
-                              onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed('/login'),
+                              onPressed: () => Navigator.of(
+                                context,
+                                rootNavigator: true,
+                              ).pushNamed('/login'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(255, 134, 149, 135), // Green mixed with gray
-                                minimumSize: const Size(0, 50), // Height only, width controlled by SizedBox
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  134,
+                                  149,
+                                  135,
+                                ), // Green mixed with gray
+                                minimumSize: const Size(
+                                  0,
+                                  50,
+                                ), // Height only, width controlled by SizedBox
                               ),
                               child: const Text(
                                 'Sign In/Log In',
@@ -137,8 +157,14 @@ class ArrowPainter extends CustomPainter {
 
     // Draw elongated filled triangular head
     final headPath = Path();
-    headPath.moveTo(size.width * 0.3, size.height * 0.3); // Top point of triangle
-    headPath.lineTo(size.width * 0.0, size.height * 0.5); // Left point, extended for elongation
+    headPath.moveTo(
+      size.width * 0.3,
+      size.height * 0.3,
+    ); // Top point of triangle
+    headPath.lineTo(
+      size.width * 0.0,
+      size.height * 0.5,
+    ); // Left point, extended for elongation
     headPath.lineTo(size.width * 0.3, size.height * 0.7); // Bottom point
     headPath.close();
     canvas.drawPath(headPath, paint);

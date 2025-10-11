@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sacco_app/services/member_provider.dart';
-import 'package:sacco_app/services/api_service.dart';
 import 'package:sacco_app/widgets/custom_input_field.dart';
 
 class LoanRequestScreen extends StatefulWidget {
   const LoanRequestScreen({super.key});
-
   @override
   LoanRequestScreenState createState() => LoanRequestScreenState();
 }
@@ -14,7 +12,6 @@ class LoanRequestScreen extends StatefulWidget {
 class LoanRequestScreenState extends State<LoanRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
-  final ApiService _apiService = ApiService();
   final bool _isLoading = false;
   double _maxLoanAmount = 0.0;
 
@@ -26,14 +23,25 @@ class LoanRequestScreenState extends State<LoanRequestScreen> {
 
   Future<void> _loadLoanEligibility() async {
     try {
-      final result = await _apiService.calculateLoanEligibility('MEM001');
-      if (result['success']) {
+      final memberProvider = Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      );
+      final memberNumber = 'MEM001'; // Should come from auth provider
+
+      final result = await memberProvider.calculateLoanEligibility(
+        memberNumber,
+      );
+      if (result['success'] && result['data'] != null) {
         setState(() {
-          _maxLoanAmount = result['maxLoanAmount'];
+          _maxLoanAmount = result['data']['max_loan_amount']?.toDouble() ?? 0.0;
+        });
+      } else {
+        setState(() {
+          _maxLoanAmount = 150000.0; // Default max amount
         });
       }
     } catch (e) {
-      // Handle error
       setState(() {
         _maxLoanAmount = 150000.0; // Default max amount
       });
@@ -54,7 +62,7 @@ class LoanRequestScreenState extends State<LoanRequestScreen> {
         child: Consumer<MemberProvider>(
           builder: (context, memberProvider, child) {
             final memberData = memberProvider.memberData;
-            
+            final memberNumber = memberData?.memberNumber ?? 'MEM001';
             return SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -64,28 +72,28 @@ class LoanRequestScreenState extends State<LoanRequestScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 20),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: memberData?.memberName ?? 'Loading...'),
+                        controller: TextEditingController(
+                          text: memberData?.memberName ?? 'Loading...',
+                        ),
                         label: 'Member Name',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: memberData?.memberNumber ?? 'Loading...'),
+                        controller: TextEditingController(text: memberNumber),
                         label: 'Member Number',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: 'Request for Loan'),
+                        controller: TextEditingController(
+                          text: 'Request for Loan',
+                        ),
                         label: 'Transaction Type',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
                         controller: _amountController,
                         label: 'Requested Amount',
@@ -106,7 +114,6 @@ class LoanRequestScreenState extends State<LoanRequestScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
                       if (_maxLoanAmount > 0)
                         Container(
                           width: double.infinity,
@@ -139,17 +146,24 @@ class LoanRequestScreenState extends State<LoanRequestScreen> {
                           ),
                         ),
                       const SizedBox(height: 32),
-                      
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _confirmLoanRequest,
+                          onPressed: _isLoading
+                              ? null
+                              : () => _confirmLoanRequest(
+                                  context,
+                                  memberProvider,
+                                  memberNumber,
+                                ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             minimumSize: const Size(0, 50),
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
                               : const Text(
                                   'Confirm',
                                   style: TextStyle(
@@ -171,18 +185,20 @@ class LoanRequestScreenState extends State<LoanRequestScreen> {
     );
   }
 
-  void _confirmLoanRequest() {
+  void _confirmLoanRequest(
+    BuildContext context,
+    MemberProvider memberProvider,
+    String memberNumber,
+  ) {
     if (_formKey.currentState!.validate()) {
       final amount = double.parse(_amountController.text);
-      final memberProvider = Provider.of<MemberProvider>(context, listen: false);
       final memberData = memberProvider.memberData;
-      
       Navigator.pushNamed(
         context,
         '/guarantor-selection',
         arguments: {
           'memberName': memberData?.memberName ?? '',
-          'memberNumber': memberData?.memberNumber ?? '',
+          'memberNumber': memberNumber,
           'requestedAmount': amount,
         },
       );

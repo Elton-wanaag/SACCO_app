@@ -13,7 +13,7 @@ class LoginScreen extends StatefulWidget {
 
 class LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailOrIdController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -31,46 +31,33 @@ class LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       try {
         final result = await authProvider.login(
-          _emailOrIdController.text.trim(),
+          _emailController.text.trim(),
           _passwordController.text,
         );
 
         if (mounted) {
           if (result['success'] == true) {
             _showSnackBar(result['message'] ?? 'Login successful!');
-            
+
             // Navigate to home after successful login
             SchedulerBinding.instance.addPostFrameCallback((_) {
-              Navigator.of(context, rootNavigator: true).pushReplacementNamed('/home');
+              Navigator.of(
+                context,
+                rootNavigator: true,
+              ).pushReplacementNamed('/home');
             });
           } else {
             // Handle login errors
             String errorMessage = result['message'] ?? 'Login failed';
-            
-            // Handle field-specific errors
-            if (result['errors'] != null && result['errors'] is Map) {
-              final errors = result['errors'] as Map<String, dynamic>;
-              List<String> errorMessages = [];
-              
-              errors.forEach((field, messages) {
-                if (messages is List) {
-                  errorMessages.addAll(messages.map((msg) => msg.toString()));
-                } else {
-                  errorMessages.add(messages.toString());
-                }
-              });
-              
-              if (errorMessages.isNotEmpty) {
-                errorMessage = errorMessages.join('\n');
-              }
-            }
-            
             _showSnackBar(errorMessage, isError: true);
           }
         }
       } catch (e) {
         if (mounted) {
-          _showSnackBar('An unexpected error occurred. Please try again.', isError: true);
+          _showSnackBar(
+            'An unexpected error occurred. Please try again.',
+            isError: true,
+          );
         }
       }
     }
@@ -85,15 +72,14 @@ class LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         title: const Text(
           'SIGN IN/LOG IN',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         leading: isWeb
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.of(context, rootNavigator: true).pushNamed('/'),
+                onPressed: () =>
+                    Navigator.of(context, rootNavigator: true).pushNamed('/'),
               )
             : null,
       ),
@@ -102,7 +88,8 @@ class LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
+                minHeight:
+                    MediaQuery.of(context).size.height -
                     MediaQuery.of(context).padding.top -
                     MediaQuery.of(context).padding.bottom,
               ),
@@ -115,18 +102,21 @@ class LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       InputField(
-                        controller: _emailOrIdController,
-                        label: 'Email/Identification Number',
-                        keyboardType: TextInputType.text,
+                        controller: _emailController,
+                        label: 'Email',
+                        keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter email or identification number';
+                            return 'Please enter email';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Please enter a valid email';
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
                       InputField(
                         controller: _passwordController,
                         label: 'Password',
@@ -142,7 +132,7 @@ class LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      
+
                       ElevatedButton(
                         onPressed: authProvider.isLoading
                             ? null
@@ -152,18 +142,23 @@ class LoginScreenState extends State<LoginScreen> {
                           minimumSize: const Size(200, 50),
                         ),
                         child: authProvider.isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
                             : const Text(
                                 'Sign In/Log In',
                                 style: TextStyle(color: Colors.white),
                               ),
                       ),
-                      
+
                       const SizedBox(height: 16),
-                      
+
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context, rootNavigator: true).pushNamed('/register');
+                          Navigator.of(
+                            context,
+                            rootNavigator: true,
+                          ).pushNamed('/register');
                         },
                         child: const Text(
                           'Don\'t have an account? Sign Up',
@@ -243,7 +238,10 @@ class InputField extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Colors.red, width: 1.5),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
         ],

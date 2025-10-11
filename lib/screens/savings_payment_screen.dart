@@ -5,7 +5,6 @@ import 'package:sacco_app/widgets/custom_input_field.dart';
 
 class SavingsPaymentScreen extends StatefulWidget {
   const SavingsPaymentScreen({super.key});
-
   @override
   SavingsPaymentScreenState createState() => SavingsPaymentScreenState();
 }
@@ -29,7 +28,7 @@ class SavingsPaymentScreenState extends State<SavingsPaymentScreen> {
         child: Consumer<MemberProvider>(
           builder: (context, memberProvider, child) {
             final memberData = memberProvider.memberData;
-            
+            final memberNumber = memberData?.memberNumber ?? 'MEM001';
             return SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -39,28 +38,28 @@ class SavingsPaymentScreenState extends State<SavingsPaymentScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 20),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: memberData?.memberName ?? 'Loading...'),
+                        controller: TextEditingController(
+                          text: memberData?.memberName ?? 'Loading...',
+                        ),
                         label: 'Member Name',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: memberData?.memberNumber ?? 'Loading...'),
+                        controller: TextEditingController(text: memberNumber),
                         label: 'Member Number',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
-                        controller: TextEditingController(text: 'Savings Deposit'),
+                        controller: TextEditingController(
+                          text: 'Savings Deposit',
+                        ),
                         label: 'Transaction Type',
                         readOnly: true,
                       ),
                       const SizedBox(height: 16),
-                      
                       CustomInputField(
                         controller: _amountController,
                         label: 'Amount',
@@ -78,17 +77,24 @@ class SavingsPaymentScreenState extends State<SavingsPaymentScreen> {
                         },
                       ),
                       const SizedBox(height: 32),
-                      
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _confirmPayment,
+                          onPressed: _isLoading
+                              ? null
+                              : () => _confirmPayment(
+                                  context,
+                                  memberProvider,
+                                  memberNumber,
+                                ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             minimumSize: const Size(0, 50),
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
                               : const Text(
                                   'Confirm',
                                   style: TextStyle(
@@ -110,19 +116,21 @@ class SavingsPaymentScreenState extends State<SavingsPaymentScreen> {
     );
   }
 
-  void _confirmPayment() {
+  void _confirmPayment(
+    BuildContext context,
+    MemberProvider memberProvider,
+    String memberNumber,
+  ) {
     if (_formKey.currentState!.validate()) {
       final amount = double.parse(_amountController.text);
-      final memberProvider = Provider.of<MemberProvider>(context, listen: false);
       final memberData = memberProvider.memberData;
-      
       Navigator.pushNamed(
         context,
         '/payment-confirmation',
         arguments: {
           'type': 'savings',
           'memberName': memberData?.memberName ?? '',
-          'memberNumber': memberData?.memberNumber ?? '',
+          'memberNumber': memberNumber,
           'amount': amount,
         },
       );
