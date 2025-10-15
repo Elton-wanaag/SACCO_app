@@ -1,3 +1,4 @@
+// lib/screens/registration_screen.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -7,7 +8,6 @@ import '../services/auth_provider.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
-
   @override
   RegistrationScreenState createState() => RegistrationScreenState();
 }
@@ -21,17 +21,14 @@ class RegistrationScreenState extends State<RegistrationScreen> {
   final _confirmPasswordController = TextEditingController();
   final _idNumberController = TextEditingController();
   final _dobController = TextEditingController();
-
   String? _selectedApplicantType;
   String? _selectedGender;
   bool _termsAccepted = false;
-
   final List<String> _applicantTypes = [
     'Corporate/Business',
     'individual',
     'Child',
   ];
-
   final List<String> _genders = ['male', 'Female', 'Other'];
 
   Future<void> _selectDate(BuildContext context) async {
@@ -73,17 +70,15 @@ class RegistrationScreenState extends State<RegistrationScreen> {
           identificationNo: _idNumberController.text.trim(),
           gender: _selectedGender!,
         );
-
         if (mounted) {
           if (result['success'] == true) {
             _showSnackBar(result['message'] ?? 'Registration successful!');
-
-            // Navigate to login after successful registration
+            // NEW: Navigate to registration status screen instead of login
             SchedulerBinding.instance.addPostFrameCallback((_) {
               Navigator.of(
                 context,
                 rootNavigator: true,
-              ).pushReplacementNamed('/login');
+              ).pushReplacementNamed('/registration-status');
             });
           } else {
             // Handle registration errors
@@ -111,7 +106,6 @@ class RegistrationScreenState extends State<RegistrationScreen> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final isWeb = kIsWeb;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -159,7 +153,6 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
                       InputField(
                         controller: _emailController,
                         label: 'Email',
@@ -175,7 +168,6 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
                       InputField(
                         controller: _phoneController,
                         label: 'Phone Number',
@@ -191,7 +183,6 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
                       InputField(
                         controller: _passwordController,
                         label: 'Password',
@@ -207,7 +198,6 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
                       InputField(
                         controller: _confirmPasswordController,
                         label: 'Confirm Password',
@@ -223,7 +213,6 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
                       // Applicant Type Dropdown
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -298,7 +287,6 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
                       InputField(
                         controller: _idNumberController,
                         label: 'Identification Number',
@@ -314,7 +302,6 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
                       // Gender Dropdown
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -389,7 +376,6 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
                       InputField(
                         controller: _dobController,
                         label: 'Date of Birth',
@@ -403,7 +389,6 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
-
                       Row(
                         children: [
                           Checkbox(
@@ -431,7 +416,6 @@ class RegistrationScreenState extends State<RegistrationScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-
                       ElevatedButton(
                         onPressed: authProvider.isLoading
                             ? null

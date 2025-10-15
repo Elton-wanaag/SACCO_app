@@ -1,12 +1,11 @@
+// lib/authentication/login_screen.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/scheduler.dart';
 import '../services/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
   @override
   LoginScreenState createState() => LoginScreenState();
 }
@@ -15,6 +14,7 @@ class LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _passwordVisible = false;
 
   void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -34,18 +34,20 @@ class LoginScreenState extends State<LoginScreen> {
           _emailController.text.trim(),
           _passwordController.text,
         );
-
         if (mounted) {
           if (result['success'] == true) {
             _showSnackBar(result['message'] ?? 'Login successful!');
 
-            // Navigate to home after successful login
-            SchedulerBinding.instance.addPostFrameCallback((_) {
+            // NEW: Redirect based on approval status
+            if (authProvider.isApproved) {
+              // User is approved, go to dashboard
+              Navigator.of(context).pushReplacementNamed('/home');
+            } else {
+              // User is not approved, go to registration status
               Navigator.of(
                 context,
-                rootNavigator: true,
-              ).pushReplacementNamed('/home');
-            });
+              ).pushReplacementNamed('/registration-status');
+            }
           } else {
             // Handle login errors
             String errorMessage = result['message'] ?? 'Login failed';
@@ -71,7 +73,7 @@ class LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'SIGN IN/LOG IN',
+          'LOGIN',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -101,6 +103,20 @@ class LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      const Text(
+                        'Welcome Back!',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Please sign in to continue',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 40),
                       InputField(
                         controller: _emailController,
                         label: 'Email',
@@ -116,11 +132,22 @@ class LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
                       InputField(
                         controller: _passwordController,
                         label: 'Password',
-                        obscureText: true,
+                        obscureText: !_passwordVisible,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _passwordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _passwordVisible = !_passwordVisible;
+                            });
+                          },
+                        ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter password';
@@ -132,38 +159,57 @@ class LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
-
-                      ElevatedButton(
-                        onPressed: authProvider.isLoading
-                            ? null
-                            : () => _performLogin(authProvider),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          minimumSize: const Size(200, 50),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            // Forgot password functionality can be added here
+                          },
+                          child: const Text(
+                            'Forgot Password?',
+                            style: TextStyle(color: Colors.green),
+                          ),
                         ),
-                        child: authProvider.isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : const Text(
-                                'Sign In/Log In',
-                                style: TextStyle(color: Colors.white),
-                              ),
                       ),
-
-                      const SizedBox(height: 16),
-
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(
-                            context,
-                            rootNavigator: true,
-                          ).pushNamed('/register');
-                        },
-                        child: const Text(
-                          'Don\'t have an account? Sign Up',
-                          style: TextStyle(color: Colors.green),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: authProvider.isLoading
+                              ? null
+                              : () => _performLogin(authProvider),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            minimumSize: const Size(0, 50),
+                          ),
+                          child: authProvider.isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : const Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('Don\'t have an account?'),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(context).pushNamed('/register'),
+                            child: const Text(
+                              'Sign Up',
+                              style: TextStyle(color: Colors.green),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -183,8 +229,7 @@ class InputField extends StatelessWidget {
   final String label;
   final TextInputType? keyboardType;
   final bool obscureText;
-  final bool readOnly;
-  final VoidCallback? onTap;
+  final Widget? suffixIcon;
   final String? Function(String?)? validator;
 
   const InputField({
@@ -193,8 +238,7 @@ class InputField extends StatelessWidget {
     required this.label,
     this.keyboardType,
     this.obscureText = false,
-    this.readOnly = false,
-    this.onTap,
+    this.suffixIcon,
     this.validator,
   });
 
@@ -218,8 +262,6 @@ class InputField extends StatelessWidget {
             controller: controller,
             keyboardType: keyboardType,
             obscureText: obscureText,
-            readOnly: readOnly,
-            onTap: onTap,
             validator: validator,
             decoration: InputDecoration(
               border: OutlineInputBorder(
@@ -242,6 +284,7 @@ class InputField extends StatelessWidget {
                 horizontal: 12,
                 vertical: 10,
               ),
+              suffixIcon: suffixIcon,
             ),
           ),
         ],

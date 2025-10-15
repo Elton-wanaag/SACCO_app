@@ -1,3 +1,4 @@
+// lib/screens/home_screen.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -25,21 +26,27 @@ class HomeScreenState extends State<HomeScreen> {
         listen: false,
       );
 
-      // Check if user is authenticated
-      if (!authProvider.isAuthenticated) {
-        // If not authenticated, redirect to login
+      // Check if user is authenticated and approved
+      if (!authProvider.isAuthenticated || !authProvider.isApproved) {
+        // If not authenticated or not approved, redirect to appropriate screen
         if (mounted) {
-          Navigator.of(context).pushReplacementNamed('/login');
+          // Redirect based on registration stage
+          String redirectRoute = '/login';
+          if (authProvider.isAuthenticated) {
+            // User is logged in but not approved, go to registration status
+            redirectRoute = '/registration-status';
+          }
+          Navigator.of(context).pushReplacementNamed(redirectRoute);
         }
         return;
       }
 
-      // If authenticated, load member data
-      final memberNumber =
-          authProvider.memberId?.toString() ??
-          'MEM001'; // You'll need to adjust this to get the actual member number
-      memberProvider.loadMemberData(memberNumber);
-      memberProvider.loadCurrentLoan(memberNumber);
+      // If authenticated and approved, load member data
+      final memberNumber = authProvider.memberNumber ?? '';
+      if (memberNumber.isNotEmpty) {
+        memberProvider.loadMemberData(memberNumber);
+        memberProvider.loadCurrentLoan(memberNumber);
+      }
     });
   }
 
@@ -64,16 +71,32 @@ class HomeScreenState extends State<HomeScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
-    // Check authentication here too in case the user was logged out elsewhere
+    // Check authentication and approval here too in case the user was logged out elsewhere
     final authProvider = Provider.of<AuthProvider>(context);
-    if (!authProvider.isAuthenticated) {
-      // Redirect to login if not authenticated
+    if (!authProvider.isAuthenticated || !authProvider.isApproved) {
+      // Redirect to appropriate screen if not authenticated or approved
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          Navigator.of(context).pushReplacementNamed('/login');
+          String redirectRoute = '/login';
+          if (authProvider.isAuthenticated) {
+            // User is logged in but not approved, go to registration status
+            redirectRoute = '/registration-status';
+          }
+          Navigator.of(context).pushReplacementNamed(redirectRoute);
         }
       });
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Checking registration status...'),
+            ],
+          ),
+        ),
+      );
     }
 
     return PopScope(

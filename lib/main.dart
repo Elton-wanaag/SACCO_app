@@ -1,3 +1,4 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sacco_app/authentication/login_screen.dart';
@@ -15,6 +16,7 @@ import 'package:sacco_app/screens/loan_payment_screen.dart';
 import 'package:sacco_app/screens/transactions_screen.dart';
 import 'package:sacco_app/screens/contact_screen.dart';
 import 'package:sacco_app/screens/capital_topup_screen.dart';
+import 'package:sacco_app/screens/registration_status_screen.dart'; // NEW
 import 'package:sacco_app/services/auth_provider.dart';
 import 'package:sacco_app/services/member_provider.dart';
 
@@ -46,7 +48,7 @@ class SaccoApp extends StatelessWidget {
           '/': (context) => const WelcomeScreen(), // Welcome screen is root
           '/register': (context) => const RegistrationScreen(),
           '/login': (context) => const LoginScreen(),
-          '/home': (context) => const HomeScreen(),
+          '/registration-status': (context) => const RegistrationStatusScreen(),
           '/terms': (context) => const TermsAndConditionsScreen(),
           '/savings-payment': (context) => const SavingsPaymentScreen(),
           '/payment-confirmation': (context) =>
@@ -60,6 +62,7 @@ class SaccoApp extends StatelessWidget {
           '/transactions': (context) => const TransactionsScreen(),
           '/contact': (context) => const ContactScreen(),
           '/capital-topup': (context) => const CapitalTopupScreen(),
+          '/home': (context) => const HomeScreen(), // NEW
         },
       ),
     );

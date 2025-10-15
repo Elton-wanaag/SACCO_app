@@ -1,3 +1,4 @@
+// lib/services/member_provider.dart
 import 'package:flutter/material.dart';
 import 'package:sacco_app/models/member_data.dart';
 import 'api_service.dart';
@@ -17,6 +18,16 @@ class MemberProvider with ChangeNotifier {
   LoanData? get currentLoan => _currentLoan;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  // NEW: Get registration status
+  Future<Map<String, dynamic>> getRegistrationStatus(String email) async {
+    try {
+      final result = await _apiService.getRegistrationStatus(email);
+      return result;
+    } catch (e) {
+      return {'success': false, 'message': e.toString(), 'data': null};
+    }
+  }
 
   // Load member data
   Future<Map<String, dynamic>> loadMemberData(String memberNumber) async {
@@ -223,6 +234,26 @@ class MemberProvider with ChangeNotifier {
         subject: subject,
         message: message,
       );
+      return result;
+    } catch (e) {
+      return {'success': false, 'message': e.toString(), 'data': null};
+    }
+  }
+
+  // NEW: Initiate registration payment
+  Future<Map<String, dynamic>> initiateRegistrationPayment(String email) async {
+    try {
+      final result = await _apiService.initiateRegistrationPayment(email);
+      return result;
+    } catch (e) {
+      return {'success': false, 'message': e.toString(), 'data': null};
+    }
+  }
+
+  // NEW: Check registration payment
+  Future<Map<String, dynamic>> checkRegistrationPayment(String email) async {
+    try {
+      final result = await _apiService.checkRegistrationPayment(email);
       return result;
     } catch (e) {
       return {'success': false, 'message': e.toString(), 'data': null};

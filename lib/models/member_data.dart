@@ -1,3 +1,4 @@
+// lib/models/member_data.dart
 class MemberData {
   final String memberName;
   final String memberNumber;
@@ -6,6 +7,8 @@ class MemberData {
   final double capitalShares;
   final double sharePercent;
   final double guaranteeableAmount;
+  final String stage; // New field for registration stage
+  final bool isApproved; // New field for approval status
 
   MemberData({
     required this.memberName,
@@ -15,6 +18,8 @@ class MemberData {
     required this.capitalShares,
     required this.sharePercent,
     required this.guaranteeableAmount,
+    this.stage = 'draft', // Default stage
+    this.isApproved = false, // Default approval status
   });
 
   factory MemberData.fromJson(Map<String, dynamic> json) {
@@ -32,6 +37,8 @@ class MemberData {
       guaranteeableAmount:
           (json['guaranteeable_amount'] ?? json['guaranteeableAmount'] ?? 0)
               .toDouble(),
+      stage: json['stage'] ?? json['stage'] ?? 'draft',
+      isApproved: json['is_approved'] ?? json['isApproved'] ?? false,
     );
   }
 
@@ -44,6 +51,8 @@ class MemberData {
       'capital_shares': capitalShares,
       'share_percent': sharePercent,
       'guaranteeable_amount': guaranteeableAmount,
+      'stage': stage,
+      'is_approved': isApproved,
     };
   }
 }
@@ -55,7 +64,6 @@ class TransactionData {
   final DateTime date;
   final String status;
   final String description;
-
   TransactionData({
     required this.id,
     required this.type,
@@ -64,7 +72,6 @@ class TransactionData {
     required this.status,
     required this.description,
   });
-
   factory TransactionData.fromJson(Map<String, dynamic> json) {
     return TransactionData(
       id: json['id'] ?? '',
@@ -75,7 +82,6 @@ class TransactionData {
       description: json['description'] ?? '',
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -98,7 +104,6 @@ class LoanData {
   final int monthsLeft;
   final String status;
   final List<GuarantorData> guarantors;
-
   LoanData({
     required this.loanId,
     required this.requestedAmount,
@@ -110,7 +115,6 @@ class LoanData {
     required this.status,
     required this.guarantors,
   });
-
   factory LoanData.fromJson(Map<String, dynamic> json) {
     return LoanData(
       loanId: json['loan_id'] ?? json['loanId'] ?? '',
@@ -138,7 +142,6 @@ class LoanData {
           [],
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'loan_id': loanId,
@@ -159,14 +162,12 @@ class GuarantorData {
   final String memberNumber;
   final double guaranteedAmount;
   final double availableAmount;
-
   GuarantorData({
     required this.memberName,
     required this.memberNumber,
     required this.guaranteedAmount,
     required this.availableAmount,
   });
-
   factory GuarantorData.fromJson(Map<String, dynamic> json) {
     return GuarantorData(
       memberName: json['member_name'] ?? json['memberName'] ?? '',
@@ -178,7 +179,6 @@ class GuarantorData {
           (json['available_amount'] ?? json['availableAmount'] ?? 0).toDouble(),
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'member_name': memberName,

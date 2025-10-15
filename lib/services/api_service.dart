@@ -1,3 +1,4 @@
+// lib/services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,8 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   // static const String baseUrl =
   //     'http://165.22.28.112:8069';
-
   static const String baseUrl = 'http://localhost:8069';
+  static const String dbName = 'od_db';
 
   // Token management
   Future<String?> _getSessionId() async {
@@ -43,7 +44,7 @@ class ApiService {
     print('[ApiService] Login called with email: $email');
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/api/login'),
+        Uri.parse('$baseUrl/api/login?db=$dbName'),
         headers: await _getHeaders(),
         body: jsonEncode({'email': email, 'password': password}),
       );
@@ -53,7 +54,7 @@ class ApiService {
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && data['status'] == true) {
+      if (response.statusCode == 200 && data['success'] == true) {
         // Save session ID if provided
         if (data['session_id'] != null) {
           await _saveSessionId(data['session_id']);
@@ -91,7 +92,7 @@ class ApiService {
     print('[ApiService] Register called with email: $email');
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/api/register'),
+        Uri.parse('$baseUrl/api/register?db=$dbName'),
         headers: await _getHeaders(),
         body: jsonEncode({
           'full_name': fullName,
@@ -109,7 +110,7 @@ class ApiService {
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && data['status'] == true) {
+      if (response.statusCode == 200 && data['success'] == true) {
         print('[ApiService] Registration successful for email: $email');
         return {
           'success': true,
@@ -131,6 +132,148 @@ class ApiService {
         'success': false,
         'message': 'Network error: Unable to connect to server',
         'error': e.toString(),
+      };
+    }
+  }
+
+  // NEW: Get registration status
+  Future<Map<String, dynamic>> getRegistrationStatus(String email) async {
+    print('[ApiService] getRegistrationStatus called with email: $email');
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/get_registration_status?db=$dbName'),
+        headers: await _getHeaders(),
+        body: jsonEncode({'email': email}),
+      );
+
+      print(
+        '[ApiService] getRegistrationStatus response status: ${response.statusCode}',
+      );
+      print(
+        '[ApiService] getRegistrationStatus response body: ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('[ApiService] getRegistrationStatus successful,  $data');
+        return {'success': true, 'data': data['data']};
+      } else {
+        print(
+          '[ApiService] getRegistrationStatus failed with status: ${response.statusCode}',
+        );
+        return {
+          'success': false,
+          'message': 'Failed to fetch registration status',
+          'data': null,
+        };
+      }
+    } catch (e) {
+      print('[ApiService] getRegistrationStatus error: $e');
+      return {
+        'success': false,
+        'message': 'Network error: Unable to connect to server',
+        'error': e.toString(),
+        'data': null,
+      };
+    }
+  }
+
+  // NEW: Initiate registration payment
+  Future<Map<String, dynamic>> initiateRegistrationPayment(String email) async {
+    print('[ApiService] initiateRegistrationPayment called with email: $email');
+    try {
+      final headers = await _getHeaders();
+      final sessionId = await _getSessionId();
+      if (sessionId != null) {
+        headers['Cookie'] = 'session_id=$sessionId';
+      }
+
+      print('[ApiService] initiateRegistrationPayment headers: $headers');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/initiate_registration_payment'),
+        headers: headers,
+        body: jsonEncode({'email': email}),
+      );
+
+      print(
+        '[ApiService] initiateRegistrationPayment response status: ${response.statusCode}',
+      );
+      print(
+        '[ApiService] initiateRegistrationPayment response body: ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('[ApiService] initiateRegistrationPayment successful,  $data');
+        return {'success': true, 'data': data['data']};
+      } else {
+        print(
+          '[ApiService] initiateRegistrationPayment failed with status: ${response.statusCode}',
+        );
+        return {
+          'success': false,
+          'message': 'Failed to initiate registration payment',
+          'data': null,
+        };
+      }
+    } catch (e) {
+      print('[ApiService] initiateRegistrationPayment error: $e');
+      return {
+        'success': false,
+        'message': 'Network error: Unable to connect to server',
+        'error': e.toString(),
+        'data': null,
+      };
+    }
+  }
+
+  // NEW: Check registration payment status
+  Future<Map<String, dynamic>> checkRegistrationPayment(String email) async {
+    print('[ApiService] checkRegistrationPayment called with email: $email');
+    try {
+      final headers = await _getHeaders();
+      final sessionId = await _getSessionId();
+      if (sessionId != null) {
+        headers['Cookie'] = 'session_id=$sessionId';
+      }
+
+      print('[ApiService] checkRegistrationPayment headers: $headers');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/check_registration_payment'),
+        headers: headers,
+        body: jsonEncode({'email': email}),
+      );
+
+      print(
+        '[ApiService] checkRegistrationPayment response status: ${response.statusCode}',
+      );
+      print(
+        '[ApiService] checkRegistrationPayment response body: ${response.body}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('[ApiService] checkRegistrationPayment successful, data: $data');
+        return {'success': true, 'data': data['data']};
+      } else {
+        print(
+          '[ApiService] checkRegistrationPayment failed with status: ${response.statusCode}',
+        );
+        return {
+          'success': false,
+          'message': 'Failed to check registration payment',
+          'data': null,
+        };
+      }
+    } catch (e) {
+      print('[ApiService] checkRegistrationPayment error: $e');
+      return {
+        'success': false,
+        'message': 'Network error: Unable to connect to server',
+        'error': e.toString(),
+        'data': null,
       };
     }
   }
@@ -175,7 +318,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print('[ApiService] getMemberData successful, data: $data');
-        return {'success': true, 'data': data};
+        return {'success': true, 'data': data['data']};
       } else {
         print(
           '[ApiService] getMemberData failed with status: ${response.statusCode}',
@@ -230,7 +373,7 @@ class ApiService {
         print(
           '[ApiService] getTransactionHistory successful, data count: ${data.length}',
         );
-        return {'success': true, 'data': data};
+        return {'success': true, 'data': data['data']};
       } else {
         print(
           '[ApiService] getTransactionHistory failed with status: ${response.statusCode}',
@@ -282,8 +425,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[ApiService] calculateLoanEligibility successful, data: $data');
-        return {'success': true, 'data': data};
+        print('[ApiService] calculateLoanEligibility successful,  $data');
+        return {'success': true, 'data': data['data']};
       } else {
         print(
           '[ApiService] calculateLoanEligibility failed with status: ${response.statusCode}',
@@ -338,7 +481,7 @@ class ApiService {
         print(
           '[ApiService] getAvailableGuarantors successful, data count: ${data.length}',
         );
-        return {'success': true, 'data': data};
+        return {'success': true, 'data': data['data']};
       } else {
         print(
           '[ApiService] getAvailableGuarantors failed with status: ${response.statusCode}',
@@ -394,8 +537,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[ApiService] submitLoanRequest successful, data: $data');
-        return {'success': true, 'data': data};
+        print('[ApiService] submitLoanRequest successful,  $data');
+        return {'success': true, 'data': data['data']};
       } else {
         print(
           '[ApiService] submitLoanRequest failed with status: ${response.statusCode}',
@@ -443,8 +586,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[ApiService] getCurrentLoan successful, data: $data');
-        return {'success': true, 'data': data};
+        print('[ApiService] getCurrentLoan successful,  $data');
+        return {'success': true, 'data': data['data']};
       } else if (response.statusCode == 404) {
         // No current loan is valid
         print('[ApiService] getCurrentLoan - No current loan found');
@@ -501,8 +644,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[ApiService] initiateSavingsPayment successful, data: $data');
-        return {'success': true, 'data': data};
+        print('[ApiService] initiateSavingsPayment successful,  $data');
+        return {'success': true, 'data': data['data']};
       } else {
         print(
           '[ApiService] initiateSavingsPayment failed with status: ${response.statusCode}',
@@ -555,7 +698,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print('[ApiService] confirmSavingsPayment successful, data: $data');
-        return {'success': true, 'data': data};
+        return {'success': true, 'data': data['data']};
       } else {
         print(
           '[ApiService] confirmSavingsPayment failed with status: ${response.statusCode}',
@@ -607,7 +750,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print('[ApiService] initiateLoanPayment successful, data: $data');
-        return {'success': true, 'data': data};
+        return {'success': true, 'data': data['data']};
       } else {
         print(
           '[ApiService] initiateLoanPayment failed with status: ${response.statusCode}',
@@ -656,7 +799,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print('[ApiService] confirmLoanPayment successful, data: $data');
-        return {'success': true, 'data': data};
+        return {'success': true, 'data': data['data']};
       } else {
         print(
           '[ApiService] confirmLoanPayment failed with status: ${response.statusCode}',
@@ -707,8 +850,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[ApiService] topUpCapitalShare successful, data: $data');
-        return {'success': true, 'data': data};
+        print('[ApiService] topUpCapitalShare successful,  $data');
+        return {'success': true, 'data': data['data']};
       } else {
         print(
           '[ApiService] topUpCapitalShare failed with status: ${response.statusCode}',
@@ -767,7 +910,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print('[ApiService] submitContactMessage successful, data: $data');
-        return {'success': true, 'data': data};
+        return {'success': true, 'data': data['data']};
       } else {
         print(
           '[ApiService] submitContactMessage failed with status: ${response.statusCode}',
