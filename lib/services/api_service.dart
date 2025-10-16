@@ -7,7 +7,6 @@ class ApiService {
   // static const String baseUrl =
   //     'http://165.22.28.112:8069';
   static const String baseUrl = 'http://localhost:8069';
-  static const String dbName = 'od_db';
 
   // Token management
   Future<String?> _getSessionId() async {
@@ -44,7 +43,7 @@ class ApiService {
     print('[ApiService] Login called with email: $email');
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/api/login?db=$dbName'),
+        Uri.parse('$baseUrl/api/login'),
         headers: await _getHeaders(),
         body: jsonEncode({'email': email, 'password': password}),
       );
@@ -92,7 +91,7 @@ class ApiService {
     print('[ApiService] Register called with email: $email');
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/api/register?db=$dbName'),
+        Uri.parse('$baseUrl/api/register'),
         headers: await _getHeaders(),
         body: jsonEncode({
           'full_name': fullName,
@@ -141,7 +140,7 @@ class ApiService {
     print('[ApiService] getRegistrationStatus called with email: $email');
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/api/get_registration_status?db=$dbName'),
+        Uri.parse('$baseUrl/api/get_registration_status'),
         headers: await _getHeaders(),
         body: jsonEncode({'email': email}),
       );

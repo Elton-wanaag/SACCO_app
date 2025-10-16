@@ -5,6 +5,7 @@ import '../services/auth_provider.dart';
 
 class RegistrationStatusScreen extends StatefulWidget {
   const RegistrationStatusScreen({super.key});
+
   @override
   State<RegistrationStatusScreen> createState() =>
       _RegistrationStatusScreenState();
@@ -16,7 +17,6 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      // Load the registration status when screen is opened
       if (authProvider.currentEmail != null) {
         authProvider.loadRegistrationStatus(authProvider.currentEmail!);
       }
@@ -26,37 +26,56 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'REGISTRATION STATUS',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-      ),
       body: SafeArea(
         child: Consumer<AuthProvider>(
           builder: (context, authProvider, child) {
             return Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Back Arrow + Logout Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        ).pop(), // Go back to login/register
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        alignment: Alignment.centerLeft,
+                      ),
+                      TextButton(
+                        onPressed: () => authProvider.logout(),
+                        child: const Text(
+                          'Logout',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
-                  // Registration Status Header
-                  Text(
+
+                  // Title
+                  const Text(
                     'Your Registration Status',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
+                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Complete the registration process to access your dashboard',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                   const SizedBox(height: 40),
 
@@ -65,24 +84,12 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
 
                   const SizedBox(height: 40),
 
-                  // Status Details
-                  _buildStatusDetails(authProvider),
+                  // Status Card
+                  _buildStatusCard(authProvider),
 
-                  const SizedBox(height: 40),
-
+                  const Spacer(), // Push button to bottom
                   // Action Button
                   _buildActionButton(authProvider),
-
-                  const Spacer(),
-
-                  // Logout Button
-                  TextButton(
-                    onPressed: () => authProvider.logout(),
-                    child: const Text(
-                      'Logout',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
                 ],
               ),
             );
@@ -104,58 +111,58 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
 
     return Column(
       children: [
+        // Stage Circles
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: stages.asMap().entries.map((entry) {
-            int index = entry.key;
-            String stageName = entry.value;
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(stages.length, (index) {
             bool isActive = index <= stageIndex;
             bool isCompleted = index < stageIndex;
 
             return Column(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 30,
+                  height: 30,
                   decoration: BoxDecoration(
-                    color: isActive ? Colors.green : Colors.grey[300],
+                    color: isActive
+                        ? const Color(0xFFC53E4A)
+                        : Colors.grey[300],
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isActive ? Colors.green : Colors.grey[400]!,
-                      width: 2,
-                    ),
                   ),
                   child: Center(
                     child: isCompleted
-                        ? const Icon(Icons.check, color: Colors.white, size: 20)
+                        ? const Icon(Icons.check, color: Colors.white, size: 16)
                         : Text(
                             (index + 1).toString(),
                             style: TextStyle(
                               color: isActive ? Colors.white : Colors.grey[600],
                               fontWeight: FontWeight.bold,
+                              fontSize: 12,
                             ),
                           ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  stageName,
+                  stages[index],
                   style: TextStyle(
-                    fontSize: 12,
-                    color: isActive ? Colors.green : Colors.grey[600],
+                    fontSize: 10,
+                    color: isActive ? const Color(0xFFC53E4A) : Colors.grey,
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                   ),
                   textAlign: TextAlign.center,
                 ),
               ],
             );
-          }).toList(),
+          }),
         ),
         const SizedBox(height: 20),
+        // Progress Line
         LinearProgressIndicator(
           value: (stageIndex + 1) / stages.length,
           backgroundColor: Colors.grey[300],
-          valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFC53E4A)),
+          minHeight: 6,
         ),
       ],
     );
@@ -179,7 +186,7 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
     }
   }
 
-  Widget _buildStatusDetails(AuthProvider authProvider) {
+  Widget _buildStatusCard(AuthProvider authProvider) {
     String statusText = '';
     String statusColor = '';
     String statusIcon = '';
@@ -226,28 +233,38 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
         ? Colors.blue
         : Colors.grey;
 
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            Text(statusIcon, style: const TextStyle(fontSize: 40)),
-            const SizedBox(height: 16),
-            Text(
-              statusText,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: color,
-              ),
-              textAlign: TextAlign.center,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        children: [
+          Text(statusIcon, style: const TextStyle(fontSize: 40)),
+          const SizedBox(height: 16),
+          Text(
+            statusText,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: color,
             ),
-            const SizedBox(height: 16),
-            if (authProvider.memberNumber != null &&
-                authProvider.memberNumber!.isNotEmpty)
-              Text(
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          if (authProvider.memberNumber != null &&
+              authProvider.memberNumber!.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.green[50],
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.green),
+              ),
+              child: Text(
                 'Member Number: ${authProvider.memberNumber}',
                 style: const TextStyle(
                   fontSize: 14,
@@ -255,8 +272,8 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
                   color: Colors.green,
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -264,13 +281,12 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
   Widget _buildActionButton(AuthProvider authProvider) {
     String stage = authProvider.registrationStage.toLowerCase();
     String buttonText = '';
-    Color buttonColor = Colors.grey;
+    Color buttonColor = const Color(0xFFC53E4A); // Default to red
     bool isEnabled = false;
     VoidCallback? onPressed;
 
     if (stage == 'submitted') {
       buttonText = 'Pay Now';
-      buttonColor = Colors.green;
       isEnabled = true;
       onPressed = () => _handlePayNow(authProvider);
     } else if (stage == 'process' || stage == 'payment process') {
@@ -285,7 +301,6 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
       onPressed = () => _handleCheckApproval(authProvider);
     } else if (stage == 'approved') {
       buttonText = 'Go to Dashboard';
-      buttonColor = Colors.green;
       isEnabled = true;
       onPressed = () =>
           Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
@@ -297,7 +312,10 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
         onPressed: isEnabled && !authProvider.isLoading ? onPressed : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: buttonColor,
-          minimumSize: const Size(0, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         child: authProvider.isLoading
             ? const SizedBox(
