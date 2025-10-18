@@ -372,7 +372,7 @@ class RegistrationScreenState extends State<RegistrationScreen> {
 
                   // Applicant Type Dropdown
                   DropdownButtonFormField<String>(
-                    value: _selectedApplicantType,
+                    initialValue: _selectedApplicantType,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.business_outlined, size: 20),
                       hintText: 'Applicant Type',
@@ -472,7 +472,7 @@ class RegistrationScreenState extends State<RegistrationScreen> {
 
                   // Gender Dropdown
                   DropdownButtonFormField<String>(
-                    value: _selectedGender,
+                    initialValue: _selectedGender,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.person_outlined, size: 20),
                       hintText: 'Gender',

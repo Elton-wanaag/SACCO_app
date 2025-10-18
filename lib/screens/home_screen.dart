@@ -8,6 +8,7 @@ import '../widgets/quick_action_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
   @override
   HomeScreenState createState() => HomeScreenState();
 }
@@ -56,6 +57,7 @@ class HomeScreenState extends State<HomeScreen> {
     });
     switch (index) {
       case 0:
+        // Already on home
         break;
       case 1:
         Navigator.pushNamed(context, '/transactions');
@@ -122,7 +124,7 @@ class HomeScreenState extends State<HomeScreen> {
                     rootNavigator: true,
                   ).pushNamed('/login'),
                 )
-              : null,
+              : null, // No leading button on mobile
           actions: [
             IconButton(
               icon: const Icon(Icons.menu, color: Colors.black87, size: 28),
@@ -167,10 +169,12 @@ class HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+
                       // Balance Cards - Grid Layout
                       GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true, // Allow grid to size itself
+                        physics:
+                            const NeverScrollableScrollPhysics(), // Disable scrolling inside the grid
                         crossAxisCount: isSmallScreen ? 2 : 4,
                         crossAxisSpacing: isSmallScreen ? 12 : 16,
                         mainAxisSpacing: isSmallScreen ? 12 : 16,
@@ -202,6 +206,7 @@ class HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 32),
+
                       // Quick Actions Section
                       Text(
                         'Quick Actions',
@@ -212,9 +217,12 @@ class HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
+
+                      // Quick Actions Grid
                       GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true, // Allow grid to size itself
+                        physics:
+                            const NeverScrollableScrollPhysics(), // Disable scrolling inside the grid
                         crossAxisCount: isSmallScreen ? 2 : 3,
                         crossAxisSpacing: isSmallScreen ? 12 : 16,
                         mainAxisSpacing: isSmallScreen ? 12 : 16,
@@ -327,6 +335,7 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Expanded(
+            // This Expanded is fine here, inside the Column for the drawer
             child: Consumer<AuthProvider>(
               builder: (context, authProvider, child) {
                 return ListView(
@@ -401,10 +410,11 @@ class HomeScreenState extends State<HomeScreen> {
     bool isSmallScreen,
   ) {
     // Anfal Sacco brand colors
-    final Color primaryRed = Color(0xFFD44A5B);
-    final Color lightGreen = Color(0xFF8BC34A);
-    final Color grayText = Color(0xFF6B6B6B);
-    final Color lightBackground = Color(0xFFF5F5F5);
+    final Color primaryRed = const Color(0xFFD44A5B);
+    final Color lightGreen = const Color(0xFF8BC34A);
+    final Color grayText = const Color(0xFF6B6B6B);
+    final Color lightBackground = const Color(0xFFF5F5F5);
+
     return Card(
       elevation: 6,
       shadowColor: grayText.withOpacity(0.2),
@@ -426,57 +436,86 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        child: Container(
-          padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon container
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: primaryRed,
-                  borderRadius: BorderRadius.circular(12),
+        // Wrap the inner content in a SizedBox to enforce constraints
+        child: SizedBox(
+          // Use width and height to match expected cell size if necessary,
+          // but often just letting the parent (GridView cell) size it is enough.
+          // If overflow persists, calculate or set explicit sizes.
+          width: double.infinity, // Fill the cell width
+          height: double.infinity, // Fill the cell height
+          child: Container(
+            padding: EdgeInsets.all(
+              isSmallScreen ? 12 : 16,
+            ), // Slightly reduced padding
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment:
+                  CrossAxisAlignment.center, // Align content in center
+              children: [
+                // Icon container
+                Container(
+                  padding: const EdgeInsets.all(6), // Slightly reduced padding
+                  decoration: BoxDecoration(
+                    color: primaryRed,
+                    borderRadius: BorderRadius.circular(
+                      10,
+                    ), // Slightly reduced radius
+                  ),
+                  child: Icon(
+                    _getIconForTitle(title),
+                    size: isSmallScreen ? 20 : 24, // Slightly smaller icons
+                    color: Colors.white,
+                  ),
                 ),
-                child: Icon(
-                  _getIconForTitle(title),
-                  size: isSmallScreen ? 24 : 28,
-                  color: Colors.white,
+                const SizedBox(height: 8), // Reduced spacing
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 11 : 13, // Slightly smaller font
+                    fontWeight: FontWeight.w600,
+                    color: grayText,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1, // Limit to one line
+                  overflow: TextOverflow.ellipsis, // Ellipsis if text overflows
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 13 : 15,
-                  fontWeight: FontWeight.w600,
-                  color: grayText,
-                  letterSpacing: 0.5,
+                const SizedBox(height: 6), // Reduced spacing
+                Expanded(
+                  // Use Expanded here to allow value to take remaining space
+                  child: FittedBox(
+                    // Use FittedBox to scale the value if needed
+                    fit:
+                        BoxFit.scaleDown, // Scale down if necessary, but not up
+                    alignment: Alignment.center,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: isSmallScreen
+                            ? 16
+                            : 20, // Slightly smaller font
+                        fontWeight: FontWeight.bold,
+                        color: primaryRed,
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 20 : 24,
-                  fontWeight: FontWeight.bold,
-                  color: primaryRed,
-                  letterSpacing: 0.5,
+                const SizedBox(height: 2), // Reduced spacing
+                // Subtle bottom accent
+                Container(
+                  width: 30, // Slightly shorter accent
+                  height: 2, // Slightly thinner accent
+                  decoration: BoxDecoration(
+                    color: lightGreen,
+                    borderRadius: BorderRadius.circular(
+                      1,
+                    ), // Slightly smaller radius
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              // Subtle bottom accent
-              Container(
-                width: 40,
-                height: 3,
-                decoration: BoxDecoration(
-                  color: lightGreen,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -490,10 +529,11 @@ class HomeScreenState extends State<HomeScreen> {
     bool isSmallScreen,
   ) {
     // Anfal Sacco brand colors
-    final Color primaryRed = Color(0xFFD44A5B);
-    final Color lightGreen = Color(0xFF8BC34A);
-    final Color grayText = Color(0xFF6B6B6B);
-    final Color lightBackground = Color(0xFFF5F5F5);
+    final Color primaryRed = const Color(0xFFD44A5B);
+    final Color lightGreen = const Color(0xFF8BC34A);
+    final Color grayText = const Color(0xFF6B6B6B);
+    final Color lightBackground = const Color(0xFFF5F5F5);
+
     return Card(
       elevation: 6,
       shadowColor: grayText.withOpacity(0.2),
@@ -515,77 +555,92 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        child: Container(
-          padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon container
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: primaryRed,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.pie_chart,
-                  size: isSmallScreen ? 24 : 28,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Capital Share',
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 13 : 15,
-                  fontWeight: FontWeight.w600,
-                  color: grayText,
-                  letterSpacing: 0.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildMetricColumn(
-                    'Shares',
-                    shares.toString(),
-                    isSmallScreen,
+        // Wrap the inner content in a SizedBox to enforce constraints
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: Container(
+            padding: EdgeInsets.all(
+              isSmallScreen ? 12 : 16,
+            ), // Slightly reduced padding
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment:
+                  CrossAxisAlignment.center, // Align content in center
+              children: [
+                // Icon container
+                Container(
+                  padding: const EdgeInsets.all(6), // Slightly reduced padding
+                  decoration: BoxDecoration(
+                    color: primaryRed,
+                    borderRadius: BorderRadius.circular(
+                      10,
+                    ), // Slightly reduced radius
                   ),
-                  Container(
-                    width: 1,
-                    height: 40,
-                    color: lightGreen.withOpacity(0.4),
+                  child: Icon(
+                    Icons.pie_chart,
+                    size: isSmallScreen ? 20 : 24, // Slightly smaller icon
+                    color: Colors.white,
                   ),
-                  _buildMetricColumn(
-                    'Percent',
-                    '${percent.toStringAsFixed(1)}%',
-                    isSmallScreen,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Progress indicator
-              Container(
-                width: double.infinity,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: lightBackground,
-                  borderRadius: BorderRadius.circular(2),
                 ),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: (percent / 100).clamp(0.0, 1.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: lightGreen,
-                      borderRadius: BorderRadius.circular(2),
+                const SizedBox(height: 8), // Reduced spacing
+                Text(
+                  'Capital Share',
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 11 : 13, // Slightly smaller font
+                    fontWeight: FontWeight.w600,
+                    color: grayText,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1, // Limit to one line
+                  overflow: TextOverflow.ellipsis, // Ellipsis if text overflows
+                ),
+                const SizedBox(height: 12), // Maintain spacing for metrics
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildMetricColumn(
+                      'Shares',
+                      shares.toString(),
+                      isSmallScreen,
+                    ),
+                    Container(
+                      width: 1,
+                      height: 30, // Reduced height for separator
+                      color: lightGreen.withOpacity(0.4),
+                    ),
+                    _buildMetricColumn(
+                      'Percent',
+                      '${percent.toStringAsFixed(1)}%',
+                      isSmallScreen,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6), // Reduced spacing before progress
+                // Progress indicator
+                Container(
+                  width: double.infinity,
+                  height: 3, // Slightly thinner progress bar
+                  decoration: BoxDecoration(
+                    color: lightBackground,
+                    borderRadius: BorderRadius.circular(
+                      1.5,
+                    ), // Slightly smaller radius
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: (percent / 100).clamp(0.0, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: lightGreen,
+                        borderRadius: BorderRadius.circular(1.5),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -594,30 +649,40 @@ class HomeScreenState extends State<HomeScreen> {
 
   Widget _buildMetricColumn(String label, String value, bool isSmallScreen) {
     // Anfal Sacco brand colors
-    final Color primaryRed = Color(0xFFD44A5B);
-    final Color grayText = Color(0xFF6B6B6B);
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: isSmallScreen ? 11 : 13,
-            fontWeight: FontWeight.w500,
-            color: grayText.withOpacity(0.8),
-            letterSpacing: 0.3,
+    final Color primaryRed = const Color(0xFFD44A5B);
+    final Color grayText = const Color(0xFF6B6B6B);
+
+    return Expanded(
+      // Use Expanded here to divide space evenly between shares and percent
+      child: Column(
+        mainAxisAlignment:
+            MainAxisAlignment.center, // Center items vertically within column
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: isSmallScreen ? 9 : 11, // Slightly smaller font
+              fontWeight: FontWeight.w500,
+              color: grayText.withOpacity(0.8),
+              letterSpacing: 0.3,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: isSmallScreen ? 18 : 20,
-            fontWeight: FontWeight.bold,
-            color: primaryRed,
-            letterSpacing: 0.5,
+          const SizedBox(height: 2), // Reduced spacing
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isSmallScreen ? 14 : 16, // Slightly smaller font
+              fontWeight: FontWeight.bold,
+              color: primaryRed,
+              letterSpacing: 0.5,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -627,7 +692,7 @@ class HomeScreenState extends State<HomeScreen> {
       case 'savings':
       case 'savings account':
         return Icons.savings;
-      case 'loan':
+      case 'loans':
       case 'loan balance':
         return Icons.account_balance;
       case 'deposits':
@@ -638,6 +703,8 @@ class HomeScreenState extends State<HomeScreen> {
         return Icons.trending_up;
       case 'dividends':
         return Icons.monetization_on;
+      case 'guarantee-able':
+        return Icons.security;
       default:
         return Icons.account_balance_wallet;
     }

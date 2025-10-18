@@ -36,15 +36,6 @@ class LoginScreenState extends State<LoginScreen> {
           _passwordController.text,
         );
 
-        // Add null check for result
-        if (result == null) {
-          _showSnackBar(
-            'Login failed: No response from server.',
-            isError: true,
-          );
-          return;
-        }
-
         if (mounted) {
           if (result['success'] == true) {
             _showSnackBar(result['message'] ?? 'Login successful!');

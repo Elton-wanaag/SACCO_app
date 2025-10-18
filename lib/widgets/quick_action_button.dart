@@ -1,3 +1,4 @@
+// lib/widgets/quick_action_button.dart
 import 'package:flutter/material.dart';
 
 class QuickActionButton extends StatelessWidget {
@@ -18,43 +19,41 @@ class QuickActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        color: backgroundColor ?? const Color.fromARGB(255, 200, 245, 210),
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            height: isSmallScreen ? 70 : 80,
-            padding: EdgeInsets.all(isSmallScreen ? 6.0 : 8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: isSmallScreen ? 20 : 24,
-                  color: Colors.black,
-                ),
-                SizedBox(height: isSmallScreen ? 2 : 4),
-                Expanded(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 9 : 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: backgroundColor ?? const Color.fromARGB(255, 200, 245, 210),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          // Remove the explicit height if you want the grid to manage it,
+          // or keep it if you need a fixed height. GridView will still size the card.
+          // height: isSmallScreen ? 70 : 80,
+          padding: EdgeInsets.all(isSmallScreen ? 6.0 : 8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: isSmallScreen ? 20 : 24, color: Colors.black),
+              SizedBox(height: isSmallScreen ? 2 : 4),
+              // Remove Expanded here too, use Flexible or let Text handle its size
+              Flexible(
+                // Use Flexible instead of Expanded
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 9 : 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
